@@ -202,7 +202,10 @@ const SUPABASE_KEY =
 'sb_publishable_aqJ5f9hDU9H6oy9dVD18Cw_7rIZxuQi';
 
 const supabaseClient =
-supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
 const grid=document.getElementById("grid");
 
