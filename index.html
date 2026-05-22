@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sorteo</title>
+<title>Sorteo Golden Room</title>
 
 <style>
 
 body{
 font-family:Arial;
-background:#f2f2f2;
+background:#f3f3f3;
 padding:20px;
 }
 
@@ -20,7 +20,7 @@ font-size:50px;
 
 .info{
 text-align:center;
-font-size:30px;
+font-size:28px;
 font-weight:bold;
 margin-bottom:20px;
 }
@@ -38,6 +38,7 @@ margin-bottom:30px;
 height:100%;
 width:0%;
 background:#22c55e;
+transition:0.3s;
 }
 
 .grid{
@@ -52,16 +53,21 @@ border-radius:20px;
 text-align:center;
 cursor:pointer;
 box-shadow:0 4px 10px rgba(0,0,0,0.1);
+transition:0.2s;
+}
+
+.numero:hover{
+transform:scale(1.02);
 }
 
 .numero h2{
-font-size:40px;
 margin:0;
+font-size:40px;
 }
 
 .estado{
-font-size:25px;
 margin-top:10px;
+font-size:25px;
 }
 
 .libre{
@@ -70,10 +76,67 @@ background:#dff1e3;
 
 .ocupado{
 background:#f8dede;
+cursor:not-allowed;
 }
 
-.pagado{
-background:#dfe7f8;
+/* POPUP */
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:white;
+padding:30px;
+border-radius:20px;
+width:320px;
+text-align:center;
+}
+
+.modal-content h2{
+margin-top:0;
+}
+
+input{
+width:100%;
+padding:12px;
+font-size:18px;
+margin-top:15px;
+border-radius:10px;
+border:1px solid #ccc;
+box-sizing:border-box;
+}
+
+.botones{
+margin-top:20px;
+display:flex;
+gap:10px;
+}
+
+button{
+flex:1;
+padding:12px;
+border:none;
+border-radius:10px;
+font-size:18px;
+cursor:pointer;
+}
+
+.reservar{
+background:#22c55e;
+color:white;
+}
+
+.cancelar{
+background:#ddd;
 }
 
 </style>
@@ -84,7 +147,7 @@ background:#dfe7f8;
 <h1>Selecciona tu número</h1>
 
 <div class="info">
-<span id="contador">0</span> / 50 boletos pagados
+<span id="contador">0</span> / 50 boletos reservados
 </div>
 
 <div class="barra">
@@ -93,61 +156,118 @@ background:#dfe7f8;
 
 <div class="grid" id="grid"></div>
 
-<script>
+<!-- POPUP -->
 
-const estados=["libre","ocupado","pagado"];
+<div class="modal" id="modal">
+
+<div class="modal-content">
+
+<h2>Reservar número</h2>
+
+<p>Número seleccionado:</p>
+
+<h1 id="numeroSeleccionado">00</h1>
+
+<input type="text" id="nombre" placeholder="Escribe tu nombre">
+
+<div class="botones">
+
+<button class="reservar" onclick="reservarNumero()">
+Reservar
+</button>
+
+<button class="cancelar" onclick="cerrarModal()">
+Cancelar
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
 
 const grid=document.getElementById("grid");
 
-for(let i=1;i<=50;i++){
+const modal=document.getElementById("modal");
 
-let estado="libre";
+let numeroActual=null;
+
+let tarjetas=[];
+
+for(let i=1;i<=50;i++){
 
 const div=document.createElement("div");
 
-div.className=`numero ${estado}`;
+div.className="numero libre";
 
 div.innerHTML=`
 <h2>${String(i).padStart(2,'0')}</h2>
-<div class="estado">${estado.toUpperCase()}</div>
+<div class="estado">LIBRE</div>
 `;
 
 div.onclick=()=>{
 
-let actual=estados.indexOf(estado);
-
-actual++;
-
-if(actual>=estados.length){
-actual=0;
+if(div.classList.contains("ocupado")){
+return;
 }
 
-estado=estados[actual];
+numeroActual=div;
 
-div.className=`numero ${estado}`;
+document.getElementById("numeroSeleccionado")
+.innerText=String(i).padStart(2,'0');
 
-div.innerHTML=`
-<h2>${String(i).padStart(2,'0')}</h2>
-<div class="estado">${estado.toUpperCase()}</div>
-`;
-
-actualizar();
+modal.style.display="flex";
 
 }
 
 grid.appendChild(div);
 
+tarjetas.push(div);
+
+}
+
+function cerrarModal(){
+
+modal.style.display="none";
+
+document.getElementById("nombre").value="";
+
+}
+
+function reservarNumero(){
+
+const nombre=
+document.getElementById("nombre").value;
+
+if(nombre.trim()===""){
+alert("Escribe un nombre");
+return;
+}
+
+numeroActual.className="numero ocupado";
+
+numeroActual.innerHTML=`
+<h2>${numeroActual.querySelector('h2').innerText}</h2>
+<div class="estado">OCUPADO</div>
+`;
+
+cerrarModal();
+
+actualizar();
+
 }
 
 function actualizar(){
 
-const pagados=
-document.querySelectorAll(".pagado").length;
+const ocupados=
+document.querySelectorAll(".ocupado").length;
 
 document.getElementById("contador")
-.innerText=pagados;
+.innerText=ocupados;
 
-const porcentaje=(pagados/50)*100;
+const porcentaje=(ocupados/50)*100;
 
 document.getElementById("progreso")
 .style.width=porcentaje+"%";
