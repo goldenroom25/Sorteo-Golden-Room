@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Sorteo Golden Room</title>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
@@ -20,36 +23,13 @@ margin:0;
 h1{
 text-align:center;
 font-size:45px;
-margin-bottom:10px;
-}
-
-.info{
-text-align:center;
-font-size:25px;
-font-weight:bold;
-margin-bottom:20px;
-}
-
-.barra{
-width:100%;
-height:25px;
-background:#ddd;
-border-radius:20px;
-overflow:hidden;
-margin-bottom:30px;
-}
-
-.progreso{
-height:100%;
-width:0%;
-background:#22c55e;
-transition:0.3s;
 }
 
 .grid{
 display:grid;
 grid-template-columns:repeat(2,1fr);
 gap:15px;
+margin-top:30px;
 }
 
 .numero{
@@ -58,27 +38,11 @@ border-radius:20px;
 text-align:center;
 cursor:pointer;
 box-shadow:0 4px 10px rgba(0,0,0,0.1);
-transition:0.2s;
-}
-
-.numero:hover{
-transform:scale(1.02);
 }
 
 .numero h2{
 margin:0;
 font-size:38px;
-}
-
-.estado{
-margin-top:10px;
-font-size:20px;
-font-weight:bold;
-}
-
-.nombre{
-margin-top:10px;
-font-size:18px;
 }
 
 .libre{
@@ -90,7 +54,11 @@ background:#f8dede;
 cursor:not-allowed;
 }
 
-/* MODAL */
+.nombre{
+margin-top:10px;
+font-size:18px;
+font-weight:bold;
+}
 
 .modal{
 display:none;
@@ -108,7 +76,7 @@ align-items:center;
 background:white;
 padding:30px;
 border-radius:20px;
-width:320px;
+width:300px;
 text-align:center;
 }
 
@@ -116,25 +84,20 @@ input{
 width:100%;
 padding:12px;
 font-size:18px;
+margin-top:15px;
 border-radius:10px;
 border:1px solid #ccc;
-margin-top:15px;
 box-sizing:border-box;
 }
 
-.botones{
-margin-top:20px;
-display:flex;
-gap:10px;
-}
-
 button{
-flex:1;
 padding:12px;
 border:none;
 border-radius:10px;
 font-size:18px;
 cursor:pointer;
+margin-top:15px;
+width:100%;
 }
 
 .reservar{
@@ -147,23 +110,14 @@ background:#ddd;
 }
 
 </style>
+
 </head>
 
 <body>
 
 <h1>Selecciona tu número</h1>
 
-<div class="info">
-<span id="contador">0</span> / 50 números reservados
-</div>
-
-<div class="barra">
-<div class="progreso" id="progreso"></div>
-</div>
-
 <div class="grid" id="grid"></div>
-
-<!-- MODAL -->
 
 <div class="modal" id="modal">
 
@@ -171,15 +125,11 @@ background:#ddd;
 
 <h2>Reservar número</h2>
 
-<p>Número seleccionado:</p>
-
-<h1 id="numeroSeleccionado">00</h1>
+<h1 id="numeroTexto">00</h1>
 
 <input type="text" id="nombre" placeholder="Escribe tu nombre">
 
-<div class="botones">
-
-<button class="reservar" onclick="reservarNumero()">
+<button class="reservar" onclick="reservar()">
 Reservar
 </button>
 
@@ -191,87 +141,80 @@ Cancelar
 
 </div>
 
-</div>
-
 <script>
 
-const SUPABASE_URL =
+const supabaseUrl =
 'https://owgbgpzfymrccbxgtfqc.supabase.co';
 
-const SUPABASE_KEY =
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93Z2JncHpmeW1yY2NieGd0ZnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MTE1NzYsImV4cCI6MjA5NDk4NzU3Nn0.wHXXy9BScxrXunIxL38WgbyqbOClGHM9o67S7rtNrJc';
+const supabaseKey =
+'https://owgbgpzfymrccbxgtfqc.supabase.co';
 
-const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
+const client =
+supabase.createClient(
+supabaseUrl,
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93Z2JncHpmeW1yY2NieGd0ZnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MTE1NzYsImV4cCI6MjA5NDk4NzU3Nn0.wHXXy9BScxrXunIxL38WgbyqbOClGHM9o67S7rtNrJc'
 );
 
-const grid=document.getElementById("grid");
+const grid =
+document.getElementById("grid");
 
-const modal=document.getElementById("modal");
+const modal =
+document.getElementById("modal");
 
-let numeroSeleccionado=null;
+let numeroActual = null;
 
-let numeroDiv=null;
-
-async function cargarNumeros(){
+async function cargar(){
 
 grid.innerHTML='';
 
 const { data, error } =
-await supabaseClient
+await client
 .from('numeros')
 .select('*')
 .order('numero');
 
-if(error){
+console.log(data);
 console.log(error);
+
+if(error){
+alert('Error conectando con Supabase');
 return;
 }
 
 data.forEach(item=>{
 
-const div=document.createElement("div");
+const div =
+document.createElement('div');
 
-div.className=
+div.className =
 item.estado === 'ocupado'
 ? 'numero ocupado'
 : 'numero libre';
 
-div.innerHTML=`
-<h2>${String(item.numero).padStart(2,'0')}</h2>
-<div class="estado">
-${item.estado.toUpperCase()}
-</div>
-<div class="nombre">
-${item.nombre || ''}
-</div>
+div.innerHTML = `
+<h2>${item.numero}</h2>
+<div>${item.estado}</div>
+<div class="nombre">${item.nombre || ''}</div>
 `;
 
-div.onclick=()=>{
+div.onclick = ()=>{
 
 if(item.estado === 'ocupado'){
 return;
 }
 
-numeroSeleccionado=item.numero;
+numeroActual = item.numero;
 
-numeroDiv=div;
-
-document.getElementById("numeroSeleccionado")
-.innerText=
-String(item.numero).padStart(2,'0');
+document.getElementById("numeroTexto")
+.innerText = item.numero;
 
 modal.style.display='flex';
 
-}
+};
 
 grid.appendChild(div);
 
 });
-
-actualizarBarra(data);
 
 }
 
@@ -279,52 +222,36 @@ function cerrarModal(){
 
 modal.style.display='none';
 
-document.getElementById("nombre").value='';
-
 }
 
-async function reservarNumero(){
+async function reservar(){
 
-const nombre=
+const nombre =
 document.getElementById("nombre").value;
 
-if(nombre.trim()===''){
+if(nombre===''){
 alert('Escribe tu nombre');
 return;
 }
 
-await supabaseClient
+await client
 .from('numeros')
 .update({
 estado:'ocupado',
 nombre:nombre
 })
-.eq('numero',numeroSeleccionado);
+.eq('numero',numeroActual);
 
 cerrarModal();
 
-cargarNumeros();
+cargar();
 
 }
 
-function actualizarBarra(data){
-
-const ocupados=
-data.filter(n=>n.estado==='ocupado').length;
-
-document.getElementById("contador")
-.innerText=ocupados;
-
-const porcentaje=(ocupados/50)*100;
-
-document.getElementById("progreso")
-.style.width=porcentaje+'%';
-
-}
-
-cargarNumeros();
+cargar();
 
 </script>
 
 </body>
+
 </html>
