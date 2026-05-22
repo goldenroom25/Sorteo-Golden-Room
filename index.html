@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteo</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f2f2f2;
+padding:20px;
+}
+
+h1{
+text-align:center;
+font-size:50px;
+}
+
+.info{
+text-align:center;
+font-size:30px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.barra{
+width:100%;
+height:25px;
+background:#ddd;
+border-radius:20px;
+overflow:hidden;
+margin-bottom:30px;
+}
+
+.progreso{
+height:100%;
+width:0%;
+background:#22c55e;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:15px;
+}
+
+.numero{
+padding:25px;
+border-radius:20px;
+text-align:center;
+cursor:pointer;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.numero h2{
+font-size:40px;
+margin:0;
+}
+
+.estado{
+font-size:25px;
+margin-top:10px;
+}
+
+.libre{
+background:#dff1e3;
+}
+
+.ocupado{
+background:#f8dede;
+}
+
+.pagado{
+background:#dfe7f8;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Selecciona tu número</h1>
+
+<div class="info">
+<span id="contador">0</span> / 50 boletos pagados
+</div>
+
+<div class="barra">
+<div class="progreso" id="progreso"></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+
+const estados=["libre","ocupado","pagado"];
+
+const grid=document.getElementById("grid");
+
+for(let i=1;i<=50;i++){
+
+let estado="libre";
+
+const div=document.createElement("div");
+
+div.className=`numero ${estado}`;
+
+div.innerHTML=`
+<h2>${String(i).padStart(2,'0')}</h2>
+<div class="estado">${estado.toUpperCase()}</div>
+`;
+
+div.onclick=()=>{
+
+let actual=estados.indexOf(estado);
+
+actual++;
+
+if(actual>=estados.length){
+actual=0;
+}
+
+estado=estados[actual];
+
+div.className=`numero ${estado}`;
+
+div.innerHTML=`
+<h2>${String(i).padStart(2,'0')}</h2>
+<div class="estado">${estado.toUpperCase()}</div>
+`;
+
+actualizar();
+
+}
+
+grid.appendChild(div);
+
+}
+
+function actualizar(){
+
+const pagados=
+document.querySelectorAll(".pagado").length;
+
+document.getElementById("contador")
+.innerText=pagados;
+
+const porcentaje=(pagados/50)*100;
+
+document.getElementById("progreso")
+.style.width=porcentaje+"%";
+
+}
+
+</script>
+
+</body>
+</html>
