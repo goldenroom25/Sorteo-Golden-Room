@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Sorteo Golden Room</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <style>
 
@@ -11,16 +14,18 @@ body{
 font-family:Arial;
 background:#f3f3f3;
 padding:20px;
+margin:0;
 }
 
 h1{
 text-align:center;
-font-size:50px;
+font-size:45px;
+margin-bottom:10px;
 }
 
 .info{
 text-align:center;
-font-size:28px;
+font-size:25px;
 font-weight:bold;
 margin-bottom:20px;
 }
@@ -62,12 +67,18 @@ transform:scale(1.02);
 
 .numero h2{
 margin:0;
-font-size:40px;
+font-size:38px;
 }
 
 .estado{
 margin-top:10px;
-font-size:25px;
+font-size:20px;
+font-weight:bold;
+}
+
+.nombre{
+margin-top:10px;
+font-size:18px;
 }
 
 .libre{
@@ -79,7 +90,7 @@ background:#f8dede;
 cursor:not-allowed;
 }
 
-/* POPUP */
+/* MODAL */
 
 .modal{
 display:none;
@@ -101,17 +112,13 @@ width:320px;
 text-align:center;
 }
 
-.modal-content h2{
-margin-top:0;
-}
-
 input{
 width:100%;
 padding:12px;
 font-size:18px;
-margin-top:15px;
 border-radius:10px;
 border:1px solid #ccc;
+margin-top:15px;
 box-sizing:border-box;
 }
 
@@ -147,7 +154,7 @@ background:#ddd;
 <h1>Selecciona tu número</h1>
 
 <div class="info">
-<span id="contador">0</span> / 50 boletos reservados
+<span id="contador">0</span> / 50 números reservados
 </div>
 
 <div class="barra">
@@ -156,7 +163,7 @@ background:#ddd;
 
 <div class="grid" id="grid"></div>
 
-<!-- POPUP -->
+<!-- MODAL -->
 
 <div class="modal" id="modal">
 
@@ -188,84 +195,119 @@ Cancelar
 
 <script>
 
+const SUPABASE_URL =
+'https://owgbgpzfymrccbxgtfqc.supabase.co';
+
+const SUPABASE_KEY =
+'sb_publishable_aqJ5f9hDU9H6oy9dVD18Cw_7rIZxuQi';
+
+const supabaseClient =
+supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const grid=document.getElementById("grid");
 
 const modal=document.getElementById("modal");
 
-let numeroActual=null;
+let numeroSeleccionado=null;
 
-let tarjetas=[];
+let numeroDiv=null;
 
-for(let i=1;i<=50;i++){
+async function cargarNumeros(){
+
+grid.innerHTML='';
+
+const { data, error } =
+await supabaseClient
+.from('numeros')
+.select('*')
+.order('numero');
+
+if(error){
+console.log(error);
+return;
+}
+
+data.forEach(item=>{
 
 const div=document.createElement("div");
 
-div.className="numero libre";
+div.className=
+item.estado === 'ocupado'
+? 'numero ocupado'
+: 'numero libre';
 
 div.innerHTML=`
-<h2>${String(i).padStart(2,'0')}</h2>
-<div class="estado">LIBRE</div>
+<h2>${String(item.numero).padStart(2,'0')}</h2>
+<div class="estado">
+${item.estado.toUpperCase()}
+</div>
+<div class="nombre">
+${item.nombre || ''}
+</div>
 `;
 
 div.onclick=()=>{
 
-if(div.classList.contains("ocupado")){
+if(item.estado === 'ocupado'){
 return;
 }
 
-numeroActual=div;
+numeroSeleccionado=item.numero;
+
+numeroDiv=div;
 
 document.getElementById("numeroSeleccionado")
-.innerText=String(i).padStart(2,'0');
+.innerText=
+String(item.numero).padStart(2,'0');
 
-modal.style.display="flex";
+modal.style.display='flex';
 
 }
 
 grid.appendChild(div);
 
-tarjetas.push(div);
+});
+
+actualizarBarra(data);
 
 }
 
 function cerrarModal(){
 
-modal.style.display="none";
+modal.style.display='none';
 
-document.getElementById("nombre").value="";
+document.getElementById("nombre").value='';
 
 }
 
-function reservarNumero(){
+async function reservarNumero(){
 
 const nombre=
 document.getElementById("nombre").value;
 
-if(nombre.trim()===""){
-alert("Escribe un nombre");
+if(nombre.trim()===''){
+alert('Escribe tu nombre');
 return;
 }
 
-numeroActual.className="numero ocupado";
-
-numeroActual.innerHTML=`
-<h2>${numeroActual.querySelector('h2').innerText}</h2>
-<div class="estado">OCUPADO</div>
-<div style="margin-top:10px;font-size:18px;font-weight:bold;">
-${nombre}
-</div>
-`;
+await supabaseClient
+.from('numeros')
+.update({
+estado:'ocupado',
+nombre:nombre
+})
+.eq('numero',numeroSeleccionado);
 
 cerrarModal();
 
-actualizar();
+cargarNumeros();
 
 }
 
-function actualizar(){
+function actualizarBarra(data){
 
 const ocupados=
-document.querySelectorAll(".ocupado").length;
+data.filter(n=>n.estado==='ocupado').length;
 
 document.getElementById("contador")
 .innerText=ocupados;
@@ -273,9 +315,11 @@ document.getElementById("contador")
 const porcentaje=(ocupados/50)*100;
 
 document.getElementById("progreso")
-.style.width=porcentaje+"%";
+.style.width=porcentaje+'%';
 
 }
+
+cargarNumeros();
 
 </script>
 
